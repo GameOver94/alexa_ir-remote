@@ -189,6 +189,19 @@ void handleStereo(EspalexaDevice* d) {
   if (d == nullptr) return; //this is good practice, but not required
 
   bool status = d->getValue();
+
+  if(status) {
+    irsend.sendSony(0xa81, 12, 2);    // Lautsprecher einschalten
+    delay(700);
+
+    irsend.sendPronto(AUX, 30,2);
+  }
+  else
+  {
+    irsend.sendSony(0xa81, 12, 2);    // Lautsprecher ausschalten
+  }
+
+
   Serial.printf("Stereo switched %s \n",status ? "ON" : "OFF");
 
 }
