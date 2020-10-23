@@ -8,7 +8,7 @@
 #endif
 //#define ESPALEXA_ASYNC            //uncomment for async operation (can fix empty body issue)
 //#define ESPALEXA_NO_SUBPAGE       //disable /espalexa status page
-//#define ESPALEXA_DEBUG            //activate debug serial logging
+#define ESPALEXA_DEBUG            //activate debug serial logging
 //#define ESPALEXA_MAXDEVICES 15    //set maximum devices add-able to Espalexa
 #include <Espalexa.h>
 
@@ -40,13 +40,12 @@ bool connectWifi();
 
 
 //callback functions
-void handleTV_main(EspalexaDevice* dev);
-void handleTV_volume(EspalexaDevice* dev);
 void handleStereo(EspalexaDevice* dev);
+void handleStereo_volume(EspalexaDevice* dev);
 
 
 //create devices yourself
-EspalexaDevice* TV_volume;
+EspalexaDevice* Stereo_volume;
 
 
 
@@ -65,19 +64,13 @@ void setup()
   }
   
   // Define your devices here. 
-  espalexa.addDevice("Fernseher", handleTV_main, EspalexaDeviceType::onoff); //Fernseher ein-/ausschalten
 
-  espalexa.addDevice("HDMI 1", handleTV_main, EspalexaDeviceType::onoff);
-  espalexa.addDevice("HDMI 2", handleTV_main, EspalexaDeviceType::onoff);
-  espalexa.addDevice("HDMI 3", handleTV_main, EspalexaDeviceType::onoff);
-  espalexa.addDevice("TV Weidergabe", handleTV_main, EspalexaDeviceType::onoff); // Fernseher play/pause
+  espalexa.addDevice("Stereoanlage", handleStereo, EspalexaDeviceType::onoff);
 
-  espalexa.addDevice("Lautsprecher", handleStereo, EspalexaDeviceType::onoff);
+  Stereo_volume = new EspalexaDevice("Sony Lautstärke", handleStereo_volume, EspalexaDeviceType::dimmable, 127); // Lautstärke
+  espalexa.addDevice(Stereo_volume);
 
-  TV_volume = new EspalexaDevice("Lautstärke", handleTV_volume, EspalexaDeviceType::dimmable, 127); // Lautstärke
-  espalexa.addDevice(TV_volume);
-
-  TV_volume->setPercent(50);
+  Stereo_volume->setPercent(50);
   lastVol = 50;
 
 
@@ -91,7 +84,7 @@ void loop()
 
   if ((millis() > volResetTimer + 5000) & volReset) {
     Serial.println("Volume Reset");
-    TV_volume->setPercent(50);
+    Stereo_volume->setPercent(50);
     lastVol = 50;
     volReset = false;
   }
@@ -99,64 +92,64 @@ void loop()
 
 //our callback functions
 
-void handleTV_main(EspalexaDevice* d) {
-  if (d == nullptr) return; //this is good practice, but not required
+//void handleTV_main(EspalexaDevice* d) {
+//  if (d == nullptr) return; //this is good practice, but not required
+//
+//  bool status = d->getValue();
+//
+//  switch (d->getId()) {
+//    case 0:   // TV on/off
+//      if(status) {
+//        irsend.sendPronto(powON, 104);
+//      }
+//      else
+//      {
+//        irsend.sendPronto(powOFF, 104);
+//      }
+//      
+//      Serial.printf("TV switched %s \n",status ? "ON" : "OFF");
+//      break;
+//
+//    case 1:   // HDMI 1
+//      if(status) {
+//        irsend.sendPronto(HDMI1, 104);
+//      }
+//
+//      Serial.printf("HDMI 1 switched %s \n",status ? "ON" : "OFF");
+//      break;
+//    case 2:   // HDMI 2
+//      if(status) {
+//        irsend.sendPronto(HDMI2, 104);
+//      }
+//
+//      Serial.printf("HDMI 2 switched %s \n",status ? "ON" : "OFF");
+//      break;
+//    case 3:   // HDMI 3
+//      if(status) {
+//        irsend.sendPronto(HDMI3, 104);
+//      }
+//
+//      Serial.printf("HDMI 3 switched %s \n",status ? "ON" : "OFF");
+//      break;
+//    case 4:   // Media Playback
+//       if(status) {
+//        irsend.sendPronto(mediaPlay, 104);
+//      }
+//      else
+//      {
+//        irsend.sendPronto(mediaPause, 104);
+//      }
+//
+//      Serial.printf("Media Playback switched %s \n",status ? "ON" : "OFF");
+//      break;
+//    default: // Default
+//      Serial.println("Device not defined");
+//      break;
+//  }
+//}
 
-  bool status = d->getValue();
 
-  switch (d->getId()) {
-    case 0:   // TV on/off
-      if(status) {
-        irsend.sendPronto(powON, 104);
-      }
-      else
-      {
-        irsend.sendPronto(powOFF, 104);
-      }
-      
-      Serial.printf("TV switched %s \n",status ? "ON" : "OFF");
-      break;
-
-    case 1:   // HDMI 1
-      if(status) {
-        irsend.sendPronto(HDMI1, 104);
-      }
-
-      Serial.printf("HDMI 1 switched %s \n",status ? "ON" : "OFF");
-      break;
-    case 2:   // HDMI 2
-      if(status) {
-        irsend.sendPronto(HDMI2, 104);
-      }
-
-      Serial.printf("HDMI 2 switched %s \n",status ? "ON" : "OFF");
-      break;
-    case 3:   // HDMI 3
-      if(status) {
-        irsend.sendPronto(HDMI3, 104);
-      }
-
-      Serial.printf("HDMI 3 switched %s \n",status ? "ON" : "OFF");
-      break;
-    case 4:   // Media Playback
-       if(status) {
-        irsend.sendPronto(mediaPlay, 104);
-      }
-      else
-      {
-        irsend.sendPronto(mediaPause, 104);
-      }
-
-      Serial.printf("Media Playback switched %s \n",status ? "ON" : "OFF");
-      break;
-    default: // Default
-      Serial.println("Device not defined");
-      break;
-  }
-}
-
-
-void handleTV_volume(EspalexaDevice* d) {
+void handleStereo_volume(EspalexaDevice* d) {
   if (d == nullptr) return; //this is good practice, but not required
 
   uint8_t value = d->getValue();
@@ -164,14 +157,14 @@ void handleTV_volume(EspalexaDevice* d) {
 
   if (percent - lastVol > 0) {
     for (int i = 1; i <= abs(percent - lastVol); i++) {
-      irsend.sendPronto(volUp, 104);
+      irsend.sendSony(0x481, 12, 2);
       Serial.println(i);
       delay(200);
     }
   }
   else if (percent - lastVol < 0){
     for (int i = 1; i <= abs(percent - lastVol); i++) {
-      irsend.sendPronto(volDown, 104);
+      irsend.sendSony(0xc81, 12, 2);
       Serial.println(i);
       delay(200);
     }
